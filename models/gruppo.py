@@ -1,8 +1,7 @@
-from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, SelectField, SelectMultipleField, FloatField, RadioField, TextAreaField, SubmitField
 from wtforms.validators import DataRequired, Optional
-from forms import BaseForm
-from models import BaseModel
+from .forms import BaseForm
+from .models import BaseModel
 from dataclasses import dataclass
 
 @dataclass
@@ -24,6 +23,7 @@ class FormGruppi(BaseForm):
 	i_pk_group = IntegerField("PK Gruppo", validators=[DataRequired()])
 	a_desc_group= StringField("Descrizione", validators=[DataRequired()])
 	i_ordine = IntegerField("Ordine", default=0)
+
 	def __init__(self, db,*a,**kw):
 		super().__init__(*a,**kw)
 		self.i_pk_group.data = db.next_pk("ER_GRUPPI", "I_PK_GRUPPI")

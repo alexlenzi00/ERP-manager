@@ -1,8 +1,8 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, SelectField, SelectMultipleField, FloatField, RadioField, TextAreaField, SubmitField
 from wtforms.validators import DataRequired, Optional
-from forms import BaseForm
-from models import BaseModel
+from .forms import BaseForm
+from .models import BaseModel
 from dataclasses import dataclass
 
 @dataclass
@@ -42,13 +42,8 @@ class Profilo(BaseModel):
 			"SELECT DISTINCT I_FK_PROFILO, I_FK_MACRO, I_FK_CAMPO FROM ER_CAMPI_PROFILI WHERE I_FK_PROFILO = ?",
 			(self.profilo_id,)
 		)
-
-		print(f"before_c: {before_c}")
-
 		after_c = [ {"I_FK_PROFILO": self.profilo_id, "I_FK_MACRO": m, "I_FK_CAMPO": c}
 					for m, c in zip(self.macro_fk, self.campi) ]
-
-		print(f"after_c: {after_c}")
 
 		sql += diff_no_delete(
 			before_c, after_c,

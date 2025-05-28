@@ -1,8 +1,7 @@
-from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, SelectField, SelectMultipleField, FloatField, RadioField, TextAreaField, SubmitField
 from wtforms.validators import DataRequired, Optional
-from forms import BaseForm
-from models import BaseModel
+from .forms import BaseForm
+from .models import BaseModel
 from dataclasses import dataclass
 
 @dataclass
