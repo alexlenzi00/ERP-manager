@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Gestisci Profilo{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+<li class="breadcrumb-item active">Gestione Profili</li>
+{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Profilo (aggancia Macro / Campi)</h2>
+
+<form method="post">
+	{{ form.hidden_tag() }}
+
+	<!-- profilo ---------------------------------------------------- -->
+	<div class="mb-4 col-md-4">
+		{{ form.id_profilo.label(class="form-label") }}
+		{{ form.id_profilo(class="form-select", id="sel-prof") }}
+	</div>
+
+	<!-- MACRO ------------------------------------------------------ -->
+	<div class="mb-4">
+		{{ form.macro.label(class="form-label") }}
+		{{ form.macro(class="form-select chosen-select", multiple=true, data_placeholder="Seleziona macro…") }}
+	</div>
+
+	<!-- CAMPI ------------------------------------------------------ -->
+	<div class="mb-4">
+		{{ form.campi.label(class="form-label") }}
+		{{ form.campi(class="form-select chosen-select", multiple=true, data_placeholder="Seleziona campi…") }}
+	</div>
+
+	<button type="submit" class="btn btn-success">{{ form.submit.label.text }}</button>
+	<a href="{{ url_for('index') }}" class="btn btn-secondary">Annulla</a>
+</form>
+
+<!-- Chosen ---------------------------------------------------- -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chosen-js@1.8.7/chosen.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chosen-js@1.8.7/chosen.jquery.min.js"></script>
+
+<script>
+	$('.chosen-select').chosen({width:'100%', search_contains:true, auto_complete:true});
+
+	document.getElementById('sel-prof')?.addEventListener('change', e => {
+		const url = new URL(window.location.href);
+		url.searchParams.set('p', e.target.value);
+		window.location.href = url.toString();
+	});
+</script>
+{% endblock %}

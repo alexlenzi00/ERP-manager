@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - ERP Field Admin{% endblock %}
+{% block content %}
+<h1 class="mb-3">Dashboard</h1>
+<p>Modifiche in coda: <strong>{{ queue|length }}</strong></p>
+{% if queue %}
+<ul class="list-group mb-4">
+	{% for ent, items in queue.items() %}
+	<li class="list-group-item d-flex justify-content-between align-items-center">
+		{{ ent|capitalize }}
+		<span class="badge bg-secondary rounded-pill">{{ items|length }}</span>
+	</li>
+	{% endfor %}
+</ul>
+{% endif %}
+<h3>Aggiungi nuova entità</h3>
+<ul>
+{% for ent in ['campo','tabella','macro','gruppo','profilo'] %}
+	<li><a href="/{{ ent }}/add" class="link-primary">{{ ent }}</a></li>
+{% endfor %}
+</ul>
+{% endblock %}
