@@ -20,11 +20,37 @@ db = DB()
 db.init_from_file("config.json")
 
 ENTITY_MAP = {
-	"campo": {"form": FormCampi, "title": "Campo", "table": "ER_CAMPI"},
-	"tabella": {"form": FormTabelle, "title": "Tabella", "table": "ER_TABELLE"},
-	"macro": {"form": FormMacro, "title": "Macro", "table": "ER_MACRO"},
-	"gruppo": {"form": FormGruppi, "title": "Gruppo", "table": "ER_GRUPPI"},
-	"profilo": {"form": FormProfili, "title": "Profilo", "table": "PROFILO"},
+	"campo": {
+		"form": FormCampi,
+		"title": "Campo",
+		"query": """SELECT I_PK_CAMPO AS ID, A_DESC_CAMPO AS CAMPO, A_NOME_CAMPO AS CAMPO_DB, A_TIPO_CAMPO AS TIPO, A_ALIAS AS ALIAS, A_FLAG_GROUP AS GROUP_BY,
+				A_DESC_MACRO AS MACRO, A_DESC_GRUPPI AS GRUPPO, A_DESC_TABELLA AS TABELLA, EC.I_ORDINE AS ORDINE
+				FROM ER_CAMPI EC LEFT JOIN ER_MACRO EM ON EC.I_FK_MACROSHOW = EM.I_PK_MACRO
+				LEFT JOIN ER_GRUPPI EG ON EG.I_PK_GRUPPI = EC.I_FK_GRUPPO
+				LEFT JOIN ER_TABELLE ET ON ET.I_PK_TABELLA = EC.I_FK_TABELLA
+				ORDER BY EM.I_ORDINE, EG.I_ORDINE_GRUPPI, EC.I_ORDINE"""
+	},
+	"tabella": {
+		"form": FormTabelle,
+		"title": "Tabella",
+		"query": "SELECT I_PK_TABELLA AS ID, A_NOME_TABELLA AS TABELLA, A_DESC_TABELLA AS DESCRIZIONE FROM ER_TABELLE ORDER BY I_PK_TABELLA"
+	},
+	"macro": {
+		"form": FormMacro,
+		"title": "Macro",
+		"query": "SELECT I_PK_MACRO AS ID, A_DESC_MACRO AS MACRO, I_ORDINE AS ORDINE FROM ER_MACRO ORDER BY I_ORDINE"
+	},
+	"gruppo": {
+		"form": FormGruppi,
+		"title": "Gruppo",
+		"query": "SELECT I_PK_GRUPPI AS ID, A_DESC_GRUPPI AS GRUPPO, I_ORDINE_GRUPPI AS ORDINE FROM ER_GRUPPI ORDER BY 3"
+	},
+	"profilo": {
+		"form": FormProfili,
+		"title": "Profilo",
+		"query": """SELECT A_NOME AS PROFILO, A_DESC_MACRO AS MACRO FROM ER_MACRO_PROFILI EMP INNER JOIN PROFILO P ON EMP.I_FK_PROFILO = P.I_ID
+				INNER JOIN ER_MACRO EM ON EMP.I_FK_MACRO = EM.I_PK_MACRO ORDER BY 1, 2"""
+	},
 }
 
 # INDEX
@@ -130,25 +156,38 @@ def queue_sql(lines: list[str]) -> None:
 		with open(OUTPUT_SQL, "a", encoding="utf-8") as fh:
 			fh.write("\n".join(lines) + "\n")
 
-
 @app.route("/<entity>/add", methods=["GET", "POST"])
-def add_entity(entity):
+def add_entity(entity: str):
+	if entity not in ENTITY_MAP:
+		flash('Entità sconosciuta', 'danger')
+		return redirect(url_for("index"))
+
+	FormClass = ENTITY_MAP[entity]['form']
+	form = FormClass(db)
+
+	if form.validate_on_submit():
+		data = form.to_dict()
+		pending = session.setdefault('pending', {})
+		pending.setdefault(entity, []).append(data)
+		session.modified = True
+		flash(f'{ENTITY_MAP[entity]['title']} aggiunto alla coda', 'success')
+		return redirect(url_for('index'))
+
+	return render_template("add_entity.html", form=form, entity=entity, cfg=ENTITY_MAP[entity])
+
+@app.route("/<entity>/list", methods=["GET"])
+def list_entity(entity: str):
 	if entity not in ENTITY_MAP:
 		flash("Entità sconosciuta", "danger")
 		return redirect(url_for("index"))
 
-	FormClass = ENTITY_MAP[entity]["form"]
-	form = FormClass(db)  # passiamo il db per select dinamiche
+	qry = ENTITY_MAP[entity]["query"]
 
-	if form.validate_on_submit():
-		data = form.to_dict()
-		pending = session.setdefault("pending", {})
-		pending.setdefault(entity, []).append(data)
-		session.modified = True
-		flash(f"{ENTITY_MAP[entity]['title']} aggiunto alla coda", "success")
-		return redirect(url_for("index"))
+	print(f"Executing query for {entity}: {qry}")
 
-	return render_template("add_entity.html", form=form, entity=entity, cfg=ENTITY_MAP[entity])
+	rows = db.fetchall(qry)
+	cols = rows[0].keys() if rows else []
+	return render_template("table.html", table_name=ENTITY_MAP[entity]["title"], cols=cols, rows=rows)
 
 @app.route("/download.sql")
 def download_sql():
@@ -176,6 +215,5 @@ def reset():
 	flash("Coda e file SQL azzerati.", "info")
 	return redirect(url_for("index"))
 
-# ----------------------------------------------------------------------------
 if __name__ == "__main__":
 	app.run(debug=True)

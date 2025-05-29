@@ -13,9 +13,16 @@
 	{% endfor %}
 </ul>
 {% endif %}
+<h3>Visualizza entità</h3>
+<ul>
+{% for ent in ['tabella', 'gruppo', 'macro', 'campo', 'profilo'] %}
+	<li><a href="/{{ ent }}/list" class="link-primary">{{ ent }}</a></li>
+{% endfor %}
+</ul>
+
 <h3>Aggiungi nuova entità</h3>
 <ul>
-{% for ent in ['campo','tabella','macro','gruppo','profilo'] %}
+{% for ent in ['tabella', 'gruppo', 'macro', 'campo', 'profilo'] %}
 	<li><a href="/{{ ent }}/add" class="link-primary">{{ ent }}</a></li>
 {% endfor %}
 </ul>
