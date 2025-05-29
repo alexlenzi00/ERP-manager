@@ -2,7 +2,6 @@
 import os, json, io, datetime
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash, session, Response
 from db import DB
-from sql_generator import SQLGenerator
 from models import *
 from models.campo import Campo, FormCampi
 from models.tabella import Tabella, FormTabelle
@@ -19,8 +18,6 @@ OUTPUT_SQL = 'output.sql'
 
 db = DB()
 db.init_from_file("config.json")
-
-gen = SQLGenerator()
 
 ENTITY_MAP = {
 	"campo": {"form": FormCampi, "title": "Campo", "table": "ER_CAMPI"},
@@ -79,7 +76,7 @@ def macro_get():
 def macro_post():
 	form = FormMacro(db)
 	if form.validate_on_submit():
-		macro = Macro.from_form(form)
+		macro = Macro.daForm(form)
 		session.setdefault("queue", []).extend(macro.to_sql(db))
 		return redirect(url_for("index"))
 	else:
@@ -96,7 +93,7 @@ def gruppo_get():
 def gruppo_post():
 	form = FormGruppi(db)
 	if form.validate_on_submit():
-		gruppo = Gruppo.from_form(form)
+		gruppo = Gruppo.daForm(form)
 		session.setdefault("queue", []).extend(gruppo.to_sql(db))
 		return redirect(url_for("index"))
 	else:
@@ -114,7 +111,7 @@ def profilo_post():
 	sel = request.args.get("p", type=int)
 	form = FormProfili(db, selected_id=sel)
 	if form.validate_on_submit():
-		prof = Profilo.from_form(form)
+		prof = Profilo.daForm(form)
 		session.setdefault("queue", []).extend(prof.to_sql(db))
 		return redirect(url_for("index"))
 	else:

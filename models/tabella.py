@@ -11,7 +11,7 @@ class Tabella(BaseModel):
 	A_DESC_TABELLA: str
 
 	table = "ER_TABELLE"
-	pk = "I_PK_TABELLA"
+	pk = ["I_PK_TABELLA"]
 	cols = ("I_PK_TABELLA", "A_NOME_TABELLA", "A_DESC_TABELLA")
 
 	@classmethod

@@ -20,15 +20,10 @@ class Campo(BaseModel):
 	I_FK_GRUPPO: int | None = None
 
 	table = "ER_CAMPI"
-	pk = "I_PK_CAMPO"
+	pk = ["I_PK_CAMPO"]
 	cols = ("I_PK_CAMPO", "I_FK_TABELLA", "A_NOME_CAMPO", "A_DESC_CAMPO",
 			"A_TIPO_CAMPO", "A_NOTE_CAMPO", "A_ALIAS", "A_FLAG_GROUP",
 			"I_ORDINE", "A_STRQUERY", "I_FK_MACROSHOW", "I_FK_GRUPPO")
-
-	@classmethod
-	def daForm(cls, form) -> "Campo":
-		data = {c: getattr(form, c).data for c in cls.cols if hasattr(form, c)}
-		return cls(**data)
 
 class FormCampi(BaseForm):
 	i_pk_campo = IntegerField("PK Campo", validators=[DataRequired()])

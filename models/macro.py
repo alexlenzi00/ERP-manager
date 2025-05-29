@@ -11,13 +11,8 @@ class Macro(BaseModel):
 	I_ORDINE: int = 0
 
 	table = "ER_MACRO"
-	pk = "I_PK_MACRO"
+	pk = ["I_PK_MACRO"]
 	cols = ("I_PK_MACRO", "A_NOME_MACRO", "I_ORDINE")
-
-	@classmethod
-	def daForm(cls, form) -> "Macro":
-		data = {c: getattr(form, c).data for c in cls.cols if hasattr(form, c)}
-		return cls(**data)
 
 class FormMacro(BaseForm):
 	i_pk_macro = IntegerField("PK Macro", validators=[DataRequired()])
