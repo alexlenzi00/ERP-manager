@@ -144,7 +144,6 @@ def profilo_post():
 		flash("Errore nella validazione del form", "danger")
 		return render_template("aggiungi_profilo.html", form=form, queue_len=len(session.get("queue", [])))
 
-
 def queue_sql(lines: list[str]) -> None:
 	"""
 	Accoda le query SQL sia in sessione sia nel file OUTPUT_SQL
@@ -155,25 +154,6 @@ def queue_sql(lines: list[str]) -> None:
 
 		with open(OUTPUT_SQL, "a", encoding="utf-8") as fh:
 			fh.write("\n".join(lines) + "\n")
-
-@app.route("/<entity>/add", methods=["GET", "POST"])
-def add_entity(entity: str):
-	if entity not in ENTITY_MAP:
-		flash('Entità sconosciuta', 'danger')
-		return redirect(url_for("index"))
-
-	FormClass = ENTITY_MAP[entity]['form']
-	form = FormClass(db)
-
-	if form.validate_on_submit():
-		data = form.to_dict()
-		pending = session.setdefault('pending', {})
-		pending.setdefault(entity, []).append(data)
-		session.modified = True
-		flash(f'{ENTITY_MAP[entity]['title']} aggiunto alla coda', 'success')
-		return redirect(url_for('index'))
-
-	return render_template("add_entity.html", form=form, entity=entity, cfg=ENTITY_MAP[entity])
 
 @app.route("/<entity>/list", methods=["GET"])
 def list_entity(entity: str):

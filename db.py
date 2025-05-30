@@ -13,7 +13,7 @@ def sqlStr(val):
 	elif isinstance(val, float):
 		return str(val).replace(',', '.')
 	else:
-		raise ValueError(f"Unsupported type: {type(val)}")
+		raise ValueError(f'Unsupported type: {type(val)}')
 
 class DB:
 	def __init__(self):
@@ -23,10 +23,10 @@ class DB:
 	def init_from_file(self, path):
 		with open(path) as f:
 			cfg = json.load(f)
-		self.server = cfg["db"]["server"]
-		self.username = cfg["db"]["username"]
-		self.password = cfg["db"]["password"]
-		self.database = cfg["db"]["database"]
+		self.server = cfg['db']['server']
+		self.username = cfg['db']['username']
+		self.password = cfg['db']['password']
+		self.database = cfg['db']['database']
 		self.cnxn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={self.server};DATABASE={self.database};UID={self.username};PWD={self.password}'
 		self.cnxn = pyodbc.connect(self.cnxn_str, autocommit=True)
 
@@ -41,16 +41,16 @@ class DB:
 		return rows[0] if rows else None
 
 	def next_pk(self, table, pk_field):
-		row = self.fetchone(f"SELECT ISNULL(MAX({pk_field}),0)+1 AS nxt FROM {table}")
-		return row["nxt"] if row else 1
+		row = self.fetchone(f'SELECT ISNULL(MAX({pk_field}),0)+1 AS nxt FROM {table}')
+		return row['nxt'] if row else 1
 
 def diff_full(before: Sequence[Mapping[str, Any]], after: Sequence[Mapping[str, Any]], *, id_cols: Sequence[str], table: str) -> List[str]:
-	"""
+	'''
 	Confronta due insiemi di righe (dict) e genera:
 		• INSERT - presenti solo in `after`
 		• UPDATE - presenti in entrambi ma con valori diversi
 		• DELETE - presenti solo in `before`
-	"""
+	'''
 	sql: list[str] = []
 
 	before = sorted(before, key=lambda r: tuple(r[c] for c in id_cols))
@@ -84,7 +84,7 @@ def diff_full(before: Sequence[Mapping[str, Any]], after: Sequence[Mapping[str, 
 		for col in i:
 			campi.append(col)
 			values.append(sqlStr(i[col]))
-		sql.append(f"INSERT INTO {table} ({', '.join(campi)}) VALUES ({', '.join(values)});")
+		sql.append(f'INSERT INTO {table} ({', '.join(campi)}) VALUES ({', '.join(values)});')
 
 	for u in update_keys:
 		campi = []
@@ -99,6 +99,24 @@ def diff_full(before: Sequence[Mapping[str, Any]], after: Sequence[Mapping[str, 
 				campi.append(col)
 				values.append(sqlStr(u[col]))
 
-		sql.append(f"UPDATE {table} SET {', '.join(f'{c} = {v}' for c, v in zip(campi, values))} WHERE {' AND '.join(f'{c} = {v}' for c, v in zip(campiK, valuesK))};")
+		sql.append(f'UPDATE {table} SET {', '.join(f'{c} = {v}' for c, v in zip(campi, values))} WHERE {' AND '.join(f'{c} = {v}' for c, v in zip(campiK, valuesK))};')
 
 	return sql
+
+def elenco_tabelle(db) -> List[str]:
+	'''
+	Ritorna l'elenco delle tabelle nel database.
+	'''
+
+	rows = db.fetchall("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' ORDER BY TABLE_NAME")
+	return [row['TABLE_NAME'] for row in rows] if rows else []
+
+def elenco_colonne(db, table: str) -> List[str]:
+	'''
+	Ritorna l'elenco delle colonne di una tabella.
+	'''
+
+	qry = "SELECT DISTINCT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = ? ORDER BY COLUMN_NAME"
+
+	rows = db.fetchall(qry, (table,))
+	return [row['COLUMN_NAME'] for row in rows] if rows else []
