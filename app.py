@@ -183,6 +183,10 @@ def download_sql():
 		download_name=f'update_{time.time()}.sql',
 	)
 
+@app.route("/favicon.ico")
+def favicon():
+	return send_file("static/favicon.ico", mimetype="image/x-icon")
+
 @app.route("/reset")
 def reset():
 	session.pop("queue", None)
