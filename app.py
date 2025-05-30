@@ -8,7 +8,7 @@ from models.tabella import Tabella, FormTabelle
 from models.macro import Macro, FormMacro
 from models.gruppo import Gruppo, FormGruppi
 from models.profilo import Profilo, FormProfili
-
+import time
 app = Flask(__name__)
 
 app.config["WTF_CSRF_ENABLED"] = False
@@ -193,18 +193,14 @@ def list_entity(entity: str):
 def download_sql():
 	queue = session.pop("queue", [])
 
-	if not queue:
-		flash("Nessuna query da esportare", "warning")
-		return redirect(url_for("index"))
-
-	with open(OUTPUT_SQL, "a", encoding="utf-8") as fh:
+	with open(OUTPUT_SQL, "w", encoding="utf-8") as fh:
 		fh.write("\n".join(queue) + "\n")
 
 	return send_file(
 		OUTPUT_SQL,
 		mimetype="text/sql",
 		as_attachment=True,
-		download_name="pendings.sql",
+		download_name=f'update_{time.time()}.sql',
 	)
 
 @app.route("/reset")

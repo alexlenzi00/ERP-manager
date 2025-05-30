@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - ERP Field Admin{% endblock %}
+{% block title %}ERP Manager{% endblock %}
 {% block content %}
 <h1 class="mb-3">Dashboard</h1>
-<p>Modifiche in coda: <strong>{{ queue|length }}</strong></p>
+<p>Modifiche in coda: <strong>{{ queue_len }}</strong></p>
 {% if queue %}
 <ul class="list-group mb-4">
 	{% for ent, items in queue.items() %}

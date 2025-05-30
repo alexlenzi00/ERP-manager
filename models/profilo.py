@@ -16,11 +16,11 @@ class Profilo(BaseModel):
 		sql: list[str] = []
 
 		before_m = db.fetchall("SELECT DISTINCT I_FK_PROFILO, I_FK_MACRO FROM ER_MACRO_PROFILI WHERE I_FK_PROFILO = ?", (self.i_fk_profilo,))
-		after_m = [ {"I_FK_PROFILO": self.i_fk_profilo, "I_FK_MACRO": int(m)} for m in self.macro ]
+		after_m = [ {"I_FK_PROFILO": int(self.i_fk_profilo), "I_FK_MACRO": int(m)} for m in self.macro ]
 		sql += diff_full(before_m, after_m, id_cols=("I_FK_PROFILO", "I_FK_MACRO"), table="ER_MACRO_PROFILI")
 
 		before_c = db.fetchall("SELECT DISTINCT I_FK_PROFILO, I_FK_MACRO, I_FK_CAMPO FROM ER_CAMPI_PROFILI WHERE I_FK_PROFILO = ?",(self.i_fk_profilo,))
-		after_c = [ {"I_FK_PROFILO": self.i_fk_profilo, "I_FK_MACRO": int(c.split(".")[0]), "I_FK_CAMPO": int(c.split(".")[1])} for c in self.campi ]
+		after_c = [ {"I_FK_PROFILO": int(self.i_fk_profilo), "I_FK_MACRO": int(c.split(".")[0]), "I_FK_CAMPO": int(c.split(".")[1])} for c in self.campi ]
 		sql += diff_full(before_c, after_c, id_cols=("I_FK_PROFILO", "I_FK_MACRO", "I_FK_CAMPO"), table="ER_CAMPI_PROFILI")
 
 		return sql
