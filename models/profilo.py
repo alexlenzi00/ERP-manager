@@ -48,9 +48,13 @@ class FormProfili(BaseForm):
 		rows = db.fetchall('SELECT I_ID, A_NOME FROM PROFILO ORDER BY A_NOME')
 		self.i_fk_profilo.choices = [(int(r['I_ID']), str(r['A_NOME'])) for r in rows]
 
+		print(f"FormProfili: selected_id prima = {selected_id}")
+
 		if not selected_id and self.i_fk_profilo.choices:
 			selected_id = self.i_fk_profilo.choices[0][0]
 		self.i_fk_profilo.data = selected_id
+
+		print(f"FormProfili: selected_id dopo = {selected_id}\n\n")
 
 		macro_all = db.fetchall('SELECT I_PK_MACRO, A_DESC_MACRO FROM ER_MACRO ORDER BY A_DESC_MACRO')
 		macro_link = db.fetchall('SELECT I_FK_MACRO FROM ER_MACRO_PROFILI WHERE I_FK_PROFILO = ?', (selected_id,))

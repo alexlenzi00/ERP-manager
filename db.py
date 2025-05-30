@@ -103,14 +103,6 @@ def diff_full(before: Sequence[Mapping[str, Any]], after: Sequence[Mapping[str, 
 
 	return sql
 
-def elenco_tabelle(db) -> List[str]:
-	'''
-	Ritorna l'elenco delle tabelle nel database.
-	'''
-
-	rows = db.fetchall("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' ORDER BY TABLE_NAME")
-	return [row['TABLE_NAME'] for row in rows] if rows else []
-
 def elenco_colonne(db, table: str) -> List[str]:
 	'''
 	Ritorna l'elenco delle colonne di una tabella.

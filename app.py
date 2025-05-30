@@ -58,6 +58,11 @@ ENTITY_MAP = {
 def index():
 	return render_template("index.html", queue_len=len(session.get("queue", [])))
 
+# FAVICON
+@app.route("/favicon.ico")
+def favicon():
+	return send_file("static/favicon.ico", mimetype="image/x-icon")
+
 
 # CAMPI
 @app.route("/campo/add", methods=["GET"])
@@ -144,17 +149,8 @@ def profilo_post():
 		flash("Errore nella validazione del form", "danger")
 		return render_template("aggiungi_profilo.html", form=form, queue_len=len(session.get("queue", [])))
 
-def queue_sql(lines: list[str]) -> None:
-	"""
-	Accoda le query SQL sia in sessione sia nel file OUTPUT_SQL
-	(append in coda, creando il file se non esiste).
-	"""
-	if lines:
-		session.setdefault("queue", []).extend(lines)
 
-		with open(OUTPUT_SQL, "a", encoding="utf-8") as fh:
-			fh.write("\n".join(lines) + "\n")
-
+# ENTITY LIST
 @app.route("/<entity>/list", methods=["GET"])
 def list_entity(entity: str):
 	if entity not in ENTITY_MAP:
@@ -169,6 +165,19 @@ def list_entity(entity: str):
 	cols = rows[0].keys() if rows else []
 	return render_template("table.html", table_name=ENTITY_MAP[entity]["title"], cols=cols, rows=rows)
 
+
+# SQL QUEUE
+def queue_sql(lines: list[str]) -> None:
+	"""
+	Accoda le query SQL sia in sessione sia nel file OUTPUT_SQL
+	(append in coda, creando il file se non esiste).
+	"""
+	if lines:
+		session.setdefault("queue", []).extend(lines)
+
+		with open(OUTPUT_SQL, "a", encoding="utf-8") as fh:
+			fh.write("\n".join(lines) + "\n")
+
 @app.route("/download.sql")
 def download_sql():
 	queue = session.pop("queue", [])
@@ -182,10 +191,6 @@ def download_sql():
 		as_attachment=True,
 		download_name=f'update_{time.time()}.sql',
 	)
-
-@app.route("/favicon.ico")
-def favicon():
-	return send_file("static/favicon.ico", mimetype="image/x-icon")
 
 @app.route("/reset")
 def reset():

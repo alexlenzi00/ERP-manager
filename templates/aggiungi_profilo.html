@@ -37,7 +37,7 @@
 <script>
 	document.getElementById('sel-prof')?.addEventListener('change', e => {
 		const url = new URL(window.location.href);
-		url.searchParams.set('p', e.target.value);
+		url.searchParams.set('i_fk_profilo', e.target.value);
 		window.location.href = url.toString();
 	});
 </script>
