@@ -1,5 +1,5 @@
-from wtforms import StringField, IntegerField, SelectField, SelectMultipleField, FloatField, RadioField, TextAreaField, SubmitField
-from wtforms.validators import DataRequired, Optional
+from wtforms import StringField, IntegerField
+from wtforms.validators import DataRequired
 from .forms import BaseForm
 from .models import BaseModel
 from dataclasses import dataclass
@@ -7,18 +7,18 @@ from dataclasses import dataclass
 @dataclass
 class Gruppo(BaseModel):
 	I_PK_GRUPPI: int
-	A_NOME_GRUPPI: str
+	A_DESC_GRUPPI: str
 	I_ORDINE_GRUPPI: int = 0
 
-	table = "ER_GRUPPI"
-	pk = ["I_PK_GRUPPI"]
-	cols = ("I_PK_GRUPPI", "A_NOME_GRUPPI", "I_ORDINE_GRUPPI")
+	table = 'ER_GRUPPI'
+	pk = ['I_PK_GRUPPI']
 
 class FormGruppi(BaseForm):
-	i_pk_group = IntegerField("PK Gruppo", validators=[DataRequired()])
-	a_desc_group= StringField("Descrizione", validators=[DataRequired()])
-	i_ordine = IntegerField("Ordine", default=0)
+	i_pk_gruppi = IntegerField('PK Gruppo', validators=[DataRequired()], render_kw={'readonly': True})
+	a_desc_gruppi = StringField('Gruppo', validators=[DataRequired()])
+	i_ordine_gruppi = IntegerField('Ordine', default=0)
 
-	def __init__(self, db,*a,**kw):
-		super().__init__(*a,**kw)
-		self.i_pk_group.data = db.next_pk("ER_GRUPPI", "I_PK_GRUPPI")
+	def __init__(self, db, editing=False, tasto=None, *args, **kwargs):
+		super().__init__(*args, **kwargs, submit_label=tasto)
+		if not editing:
+			self.i_pk_gruppi.data = db.next_pk('ER_GRUPPI', 'I_PK_GRUPPI')

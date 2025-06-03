@@ -1,5 +1,5 @@
-from wtforms import StringField, IntegerField, SelectField, SelectMultipleField, FloatField, RadioField, TextAreaField, SubmitField
-from wtforms.validators import DataRequired, Optional
+from wtforms import StringField, IntegerField
+from wtforms.validators import DataRequired
 from .forms import BaseForm
 from .models import BaseModel
 from dataclasses import dataclass
@@ -10,15 +10,15 @@ class Macro(BaseModel):
 	A_DESC_MACRO: str
 	I_ORDINE: int = 0
 
-	table = "ER_MACRO"
-	pk = ["I_PK_MACRO"]
-	cols = ("I_PK_MACRO", "A_NOME_MACRO", "I_ORDINE")
+	table = 'ER_MACRO'
+	pk = ['I_PK_MACRO']
 
 class FormMacro(BaseForm):
-	i_pk_macro = IntegerField("PK Macro", validators=[DataRequired()])
-	a_nome_macro = StringField("Nome Macro", validators=[DataRequired()])
-	i_ordine = IntegerField("Ordine", default=0)
+	i_pk_macro = IntegerField('PK Macro', validators=[DataRequired()], render_kw={'readonly': True})
+	a_desc_macro = StringField('Nome Macro', validators=[DataRequired()])
+	i_ordine = IntegerField('Ordine', default=0)
 
-	def __init__(self, db,*a,**kw):
-		super().__init__(*a,**kw)
-		self.i_pk_macro.data = db.next_pk("ER_MACRO", "I_PK_MACRO")
+	def __init__(self, db, editing=False, tasto=None, *args, **kwargs):
+		super().__init__(*args, **kwargs, submit_label=tasto)
+		if not editing:
+			self.i_pk_macro.data = db.next_pk('ER_MACRO', 'I_PK_MACRO')

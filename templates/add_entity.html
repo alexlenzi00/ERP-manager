@@ -1,23 +1,29 @@
-{% raw %}
 {% extends "base.html" %}
-{% block title %}Aggiungi {{ cfg.title }}{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 {% block content %}
-<h1 class="mb-4">Aggiungi {{ cfg.title }}</h1>
-<form method="post" class="row g-3">
-{{ form.hidden_tag() }}
-{% for field in form.fields if field.name != 'submit' %}
-	<div class="col-md-{{ 6 if field.type in ['StringField','SelectField','IntegerField'] else 12 }}">
-	<label class="form-label">{{ field.label.text }}</label>
-	{{ field(class="form-control" if field.type!='RadioField' else 'form-check-input') }}
-	{% if field.errors %}
-		<div class="invalid-feedback d-block">{{ field.errors[0] }}</div>
-	{% endif %}
-	</div>
-{% endfor %}
-<div class="col-12">
-	{{ form.submit(class="btn btn-success") }}
-	<a href="/" class="btn btn-link">Annulla</a>
-</div>
-</form>
+	{% block sopra %}{% endblock %}
+	<h2 class="mb-4">{{ title }}</h2>
+	<form method="post">
+		{{ form.hidden_tag() }}
+		<table>
+			{% for field in form if field.name != 'submit' %}
+				<tr>
+					<td><label class="form-label">{{ field.label.text }}</label></td>
+					<td>{{ field(class="form-control" if field.type != 'RadioField' else 'form-check-input') }}</td>
+					{% if field.errors %}
+						<div class="invalid-feedback d-block">{{ field.errors[0] }}</div>
+					{% endif %}
+				</tr>
+			{% endfor %}
+		</table>
+		<button type="submit" class="btn btn-success">{{ form.submit.label.text }}</button>
+		<a href="{{ url_for('index') }}" class="btn btn-secondary">Annulla</a>
+	</form>
+	<style>
+		tr td:nth-child(1) { width: 20% !important; }
+		tr td:nth-child(2) { width: 80% !important; }
+		table { width: 60%; }
+		td { height: 40px; }
+		td * { font-size: 16px; }
+	</style>
 {% endblock %}
-{% endraw %}

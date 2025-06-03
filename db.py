@@ -1,4 +1,4 @@
-from typing import Sequence, Mapping, Any, List
+from typing import Sequence, Mapping, Any, List, Dict
 from collections.abc import Iterable
 import pyodbc
 import json
@@ -7,7 +7,7 @@ def sqlStr(val):
 	if val is None:
 		return 'NULL'
 	elif isinstance(val, str):
-		return f"'{val.replace("'", "''")}'"
+		return f'\'{val.replace('\'', '\'\'')}\''
 	elif isinstance(val, int):
 		return str(val)
 	elif isinstance(val, float):
@@ -22,11 +22,11 @@ class DB:
 
 	def init_from_file(self, path):
 		with open(path) as f:
-			cfg = json.load(f)
-		self.server = cfg['db']['server']
-		self.username = cfg['db']['username']
-		self.password = cfg['db']['password']
-		self.database = cfg['db']['database']
+			self.config = json.load(f)
+		self.server = self.config['db']['server']
+		self.username = self.config['db']['username']
+		self.password = self.config['db']['password']
+		self.database = self.config['db']['database']
 		self.cnxn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={self.server};DATABASE={self.database};UID={self.username};PWD={self.password}'
 		self.cnxn = pyodbc.connect(self.cnxn_str, autocommit=True)
 
@@ -44,7 +44,22 @@ class DB:
 		row = self.fetchone(f'SELECT ISNULL(MAX({pk_field}),0)+1 AS nxt FROM {table}')
 		return row['nxt'] if row else 1
 
-def diff_full(before: Sequence[Mapping[str, Any]], after: Sequence[Mapping[str, Any]], *, id_cols: Sequence[str], table: str) -> List[str]:
+def _chiave(riga: Dict[str, Any], id_cols: Sequence[str]) -> List[Any]:
+	'''
+	Ritorna i valori delle colonne di chiave primaria di una riga.
+	'''
+	return [riga[k] for k in id_cols if k in riga]
+
+def _trova(righe: List[Dict[str, Any]], chiave: List[Any], id_cols: Sequence[str]) -> Dict[str, Any] | None:
+	'''
+	Ritorna la riga che ha la chiave primaria specificata.
+	'''
+	for riga in righe:
+		if _chiave(riga, id_cols) == chiave:
+			return riga
+	return None
+
+def diff_full(before: Sequence[Dict[str, Any]], after: Sequence[Dict[str, Any]], *, id_cols: Sequence[str], table: str) -> List[str]:
 	'''
 	Confronta due insiemi di righe (dict) e genera:
 		• INSERT - presenti solo in `after`
@@ -56,17 +71,9 @@ def diff_full(before: Sequence[Mapping[str, Any]], after: Sequence[Mapping[str, 
 	before = sorted(before, key=lambda r: tuple(r[c] for c in id_cols))
 	after = sorted(after, key=lambda r: tuple(r[c] for c in id_cols))
 
-	delete_keys = [k for k in before if k not in after]
-	insert_keys = [k for k in after if k not in before]
-	update_keys = []
-
-	for a in after:
-		b_tmp = None
-		for b in before:
-			if all(b[k2] == a[k2] for k2 in id_cols):
-				if a != b:
-					update_keys.append(a)
-				break
+	delete_keys = [k for k in before if _trova(after, _chiave(k, id_cols), id_cols) is None]
+	insert_keys = [k for k in after if _trova(before, _chiave(k, id_cols), id_cols) is None]
+	update_keys = [k for k in after if _trova(before, _chiave(k, id_cols), id_cols) is not None and k != _trova(before, _chiave(k, id_cols), id_cols)]
 
 	print(f'before = {before}')
 	print(f'after = {after}')
@@ -108,7 +115,7 @@ def elenco_colonne(db, table: str) -> List[str]:
 	Ritorna l'elenco delle colonne di una tabella.
 	'''
 
-	qry = "SELECT DISTINCT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = ? ORDER BY COLUMN_NAME"
+	qry = 'SELECT DISTINCT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = \'dbo\' AND TABLE_NAME = ? ORDER BY COLUMN_NAME'
 
 	rows = db.fetchall(qry, (table,))
 	return [row['COLUMN_NAME'] for row in rows] if rows else []

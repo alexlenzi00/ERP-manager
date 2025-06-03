@@ -8,7 +8,7 @@ from db import diff_full
 
 @dataclass
 class Profilo(BaseModel):
-	i_fk_profilo: int
+	i_id: int
 	macro: list[int]
 	campi: list[str]
 
@@ -26,54 +26,27 @@ class Profilo(BaseModel):
 		return sql
 
 class FormProfili(BaseForm):
-	i_fk_profilo = SelectField('Profilo', coerce=int, validators=[DataRequired()])
-	macro = SelectMultipleField(coerce=str)
-	campi = SelectMultipleField(coerce=str)
+	i_id = IntegerField('ID Profilo', validators=[DataRequired()], render_kw={'readonly': True})
+	a_nome = StringField('Profilo', validators=[DataRequired()], render_kw={'readonly': True})
+	macro = SelectMultipleField(coerce=int, validators=[Optional()], render_kw={'data-placeholder': 'Seleziona le macro'})
+	campi = SelectMultipleField(coerce=int, validators=[Optional()], render_kw={'data-placeholder': 'Seleziona i campi'})
 
-	@staticmethod
-	def _get(row, id_col, desc_col):
-		if isinstance(row, dict):
-			if '.' in str(row[id_col]):
-				return float(row[id_col]), str(row[desc_col])
-			return int(row[id_col]), str(row[desc_col])
-		try:
-			return int(getattr(row, id_col)), str(getattr(row, desc_col))
-		except AttributeError:
-			rid, rdesc = row[:2]
-			return int(rid), str(rdesc)
+	def __init__(self, db, editing=False, tasto=None, *args, **kwargs):
+		super().__init__(*args, **kwargs, submit_label=tasto)
 
-	def __init__(self, db, selected_id: int | None = None, *args, **kwa):
-		super().__init__('Salva')
+		m_all = db.fetchall('SELECT I_PK_MACRO, A_DESC_MACRO FROM ER_MACRO ORDER BY A_DESC_MACRO')
+		m_link = db.fetchall('SELECT I_FK_MACRO FROM ER_MACRO_PROFILI WHERE I_FK_PROFILO = ?', (self.i_id.data,))
 
-		rows = db.fetchall('SELECT I_ID, A_NOME FROM PROFILO ORDER BY A_NOME')
-		self.i_fk_profilo.choices = [(int(r['I_ID']), str(r['A_NOME'])) for r in rows]
+		print(f'\n\nProfilo {self.i_id.data} - Macro: {m_link}')
+		print(f'Args: {args}, Kwargs: {kwargs}\n\n')
 
-		print(f"FormProfili: selected_id prima = {selected_id}")
-
-		if not selected_id and self.i_fk_profilo.choices:
-			selected_id = self.i_fk_profilo.choices[0][0]
-		self.i_fk_profilo.data = selected_id
-
-		print(f"FormProfili: selected_id dopo = {selected_id}\n\n")
-
-		macro_all = db.fetchall('SELECT I_PK_MACRO, A_DESC_MACRO FROM ER_MACRO ORDER BY A_DESC_MACRO')
-		macro_link = db.fetchall('SELECT I_FK_MACRO FROM ER_MACRO_PROFILI WHERE I_FK_PROFILO = ?', (selected_id,))
-		linked_ids = {str(r['I_FK_MACRO']) for r in macro_link}
-
-		self.macro.choices = [(str(r['I_PK_MACRO']), str(r['A_DESC_MACRO'])) for r in macro_all]
-
+		self.macro.choices = [(str(m['I_PK_MACRO']), str(m['A_DESC_MACRO'])) for m in m_all]
 		if not self.is_submitted():
-			self.macro.data = list(linked_ids)
+			self.macro.data = list(int(m['I_FK_MACRO']) for m in m_link)
 
-		self.macro_linked = [(mid, desc) for mid, desc in self.macro.choices if mid in linked_ids]
+		c_all = db.fetchall('SELECT CONCAT(I_FK_MACROSHOW, \'.\', I_PK_CAMPO) AS I_PK_CAMPO, A_DESC_CAMPO FROM ER_CAMPI ORDER BY A_DESC_CAMPO')
+		c_link = db.fetchall('SELECT CONCAT(I_FK_MACRO, \'.\', I_FK_CAMPO) AS I_FK_CAMPO FROM ER_CAMPI_PROFILI WHERE I_FK_PROFILO = ?', (self.i_id.data,))
 
-		campi_all = db.fetchall("SELECT CONCAT(I_FK_MACROSHOW, '.', I_PK_CAMPO) AS I_PK_CAMPO, A_DESC_CAMPO FROM ER_CAMPI ORDER BY A_DESC_CAMPO")
-		campi_link = db.fetchall("SELECT CONCAT(I_FK_MACRO, '.', I_FK_CAMPO) AS I_FK_CAMPO FROM ER_CAMPI_PROFILI WHERE I_FK_PROFILO = ?", (selected_id,))
-		linked_c = {str(r['I_FK_CAMPO']) for r in campi_link}
-
-		self.campi.choices = [(str(cid), desc) for cid, desc in (self._get(r, 'I_PK_CAMPO', 'A_DESC_CAMPO') for r in campi_all)]
-
+		self.campi.choices = [(str(c['I_PK_CAMPO']), str(c['A_DESC_CAMPO'])) for c in c_all]
 		if not self.is_submitted():
-			self.campi.data = list(linked_c)
-
-		self.campi_linked = [(cid, desc) for cid, desc in self.campi.choices if cid in linked_c]
+			self.campi.data = list(str(c['I_FK_CAMPO']) for c in c_link)

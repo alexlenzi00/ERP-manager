@@ -13,7 +13,6 @@ class Relazione(BaseModel):
 
 	table = 'ER_RELAZIONI'
 	pk = ['I_FK_TABELLA1', 'I_FK_TABELLA2']
-	cols = ('I_FK_TABELLA1', 'I_FK_TABELLA2', 'A_TIPO_JOIN', 'A_VINCOLO')
 
 	@classmethod
 	def daForm(cls, form) -> 'Tabella':
@@ -25,8 +24,8 @@ class FormTabelle(BaseForm):
 	a_nome_tabella = SelectField('Tabella', coerce=str, validators=[DataRequired()])
 	a_desc_tabella = StringField('Descrizione', validators=[Optional()])
 
-	def __init__(self, db, *args, **kwargs):
+	def __init__(self, db, editing=False, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.i_pk_tabella.data = db.next_pk('ER_TABELLE', 'I_PK_TABELLA')
-		rows = db.fetchall("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' ORDER BY TABLE_NAME")
+		rows = db.fetchall('SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = \'dbo\' ORDER BY TABLE_NAME')
 		self.a_nome_tabella.choices = [(str(r['TABLE_NAME']), str(r['TABLE_NAME'])) for r in rows]

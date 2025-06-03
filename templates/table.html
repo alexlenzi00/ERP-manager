@@ -18,7 +18,11 @@
 					{% for r in rows %}
 						<tr>
 							{% for c in cols %}
-								<td>{{ r[c] }}</td>
+								{% if c == 'ID' %}
+									<td><a href="{{ url_for('edit_entity', entity=table_name.lower(), id=r[c], js=js | safe)}}">{{ r[c] }}</a></td>
+								{% else %}
+									<td>{{ r[c] }}</td>
+								{% endif %}
 							{% endfor %}
 						</tr>
 					{% endfor %}
@@ -33,9 +37,10 @@
 				responsive: false,
 				scrollX: true,
 				language: {
-					url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/it-IT.json'
+					url: "{{ url_for('static', filename='it-IT.json') }}"
 				}
 			});
 		});
 	</script>
+	{{ js|safe }}
 {% endblock %}
