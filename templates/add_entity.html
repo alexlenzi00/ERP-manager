@@ -15,6 +15,57 @@
 					{% endif %}
 				</tr>
 			{% endfor %}
+			{% if form.tables %}
+				<h5>Tabelle collegate</h5>
+				<div id="table-list">
+					{% for sub in form.tables %}
+						<div class="row mb-2 table-entry">
+							<div class="col-8">
+								{{ sub.tabella.label(class="form-label") }}
+								{{ sub.tabella(class="form-select") }}
+							</div>
+							<div class="col-2">
+								{{ sub.ordine() }}
+							</div>
+							<div class="col-2">
+								<button type="button" class="btn btn-danger btn-remove">–</button>
+							</div>
+						</div>
+					{% endfor %}
+				</div>
+				<button type="button" id="btn-add" class="btn btn-primary mb-3">+ Aggiungi tabella</button>
+				<script>
+					document.addEventListener('DOMContentLoaded', () => {
+						const container = document.getElementById('table-list');
+						const addBtn = document.getElementById('btn-add');
+						let idx = container.children.length;
+
+						addBtn.addEventListener('click', () => {
+							const template = container.querySelector('.table-entry');
+							const clone = template.cloneNode(true);
+
+							// aggiorna name/id
+							clone.querySelectorAll('select, input').forEach(el => {
+								const name = el.name.replace(/tables-\\d+-/, `tables-${idx}-`);
+								const id	 = el.id.replace(/tables-\\d+-/, `tables-${idx}-`);
+								el.name = name; el.id = id;
+								if (el.type === 'hidden') el.value = idx+1;
+								if (el.tagName === 'SELECT') el.selectedIndex = 0;
+							});
+
+							// rimuovi eventuali errori
+							container.appendChild(clone);
+							idx++;
+						});
+
+						container.addEventListener('click', e => {
+							if (e.target.matches('.btn-remove')) {
+								e.target.closest('.table-entry').remove();
+							}
+						});
+					});
+				</script>
+			{% endif %}
 		</table>
 		<button type="submit" class="btn btn-success">{{ form.submit.label.text }}</button>
 		<a href="{{ url_for('index') }}" class="btn btn-secondary">Annulla</a>

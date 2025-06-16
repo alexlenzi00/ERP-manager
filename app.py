@@ -211,6 +211,13 @@ def macro_edit_get(id: int):
 	form = FormMacro(db, editing=True, tasto='Modifica Macro')
 	form.process(data={k.lower(): v for k, v in data.items()})
 
+	assoc = db.fetchall('SELECT I_FK_TABELLA AS tabella_id, I_ORDINE AS ordine FROM ER_MACRO_TABELLE WHERE I_FK_MACRO = ? ORDER BY I_ORDINE', (id,))
+	for rec in assoc:
+		entry = {}
+		entry['tables-{}-tabella'.format(len(form.tables))] = rec['tabella_id']
+		entry['tables-{}-ordine'.format(len(form.tables))] = rec['ordine']
+		form.tables.append_entry(entry)
+
 	return render_template('edit_entity.html', form=form, title='Modifica Macro', entity='macro', js=ENTITY_MAP['macro']['js'], queue_len=QUERY_IN_CODA)
 
 @app.route('/macro/edit/<int:id>', methods=['POST'])
@@ -220,6 +227,13 @@ def macro_edit_post(id: int):
 		# eseguo update
 		for q in Macro.daForm(form).to_sql(db):
 			aggiungi_sql(q)
+
+		aggiungi_sql(f"DELETE FROM ER_MACRO_TABELLE WHERE I_FK_MACRO = {form.i_pk_macro.data}")
+		for e in form.tables.entries:
+			tid = e.form.tabella.data
+			ordn = int(e.form.ordine.data)
+			aggiungi_sql(f"INSERT INTO ER_MACRO_TABELE (I_FK_MACRO, I_FK_TABELLA, I_ORDINE) VALUES ({form.i_pk_macro.data}, {tid}, {ordn})")
+
 		return redirect(url_for('index'))
 	flash('Errore nella validazione del form', 'danger')
 	return render_template('edit_entity.html', form=form, title='Modifica Macro', entity='macro', js=ENTITY_MAP['macro']['js'], queue_len=QUERY_IN_CODA)
