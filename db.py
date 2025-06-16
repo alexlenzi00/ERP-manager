@@ -44,6 +44,11 @@ class DB:
 		row = self.fetchone(f'SELECT ISNULL(MAX({pk_field}),0)+1 AS nxt FROM {table}')
 		return row['nxt'] if row else 1
 
+	def upsert(self, sql, params=()):
+		cur = self.cnxn.cursor()
+		cur.execute(sql, params)
+		self.cnxn.commit()
+
 def _chiave(riga: Dict[str, Any], id_cols: Sequence[str]) -> List[Any]:
 	'''
 	Ritorna i valori delle colonne di chiave primaria di una riga.

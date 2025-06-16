@@ -16,9 +16,10 @@ class Macro(BaseModel):
 class FormMacro(BaseForm):
 	i_pk_macro = IntegerField('PK Macro', validators=[DataRequired()], render_kw={'readonly': True})
 	a_desc_macro = StringField('Nome Macro', validators=[DataRequired()])
-	i_ordine = IntegerField('Ordine', default=0)
+	i_ordine = IntegerField('Ordine', validators=[DataRequired()], render_kw={'readonly': True})
 
 	def __init__(self, db, editing=False, tasto=None, *args, **kwargs):
 		super().__init__(*args, **kwargs, submit_label=tasto)
 		if not editing:
 			self.i_pk_macro.data = db.next_pk('ER_MACRO', 'I_PK_MACRO')
+			self.i_ordine.data = db.next_pk('ER_MACRO', 'I_PK_MACRO')

@@ -39,9 +39,9 @@ class FormCampi(BaseForm):
 	def __init__(self, db, editing=False, tasto=None, *args, **kwargs):
 		super().__init__(*args, **kwargs, submit_label=tasto)
 		self.i_fk_tabella.choices = [(t['I_PK_TABELLA'], t['A_NOME_TABELLA']) for t in db.fetchall('SELECT I_PK_TABELLA, A_NOME_TABELLA FROM ER_TABELLE ORDER BY 2')]
-		self.a_tipo_campo.choices = [(v, k) for k, v in db.config['costanti']['tipi'].items()]
+		self.a_tipo_campo.choices = [(v, f'{k} ({v})') for k, v in db.config['costanti']['tipi'].items()]
 		self.a_flag_group.choices = [('N', 'No'), ('S', 'Si')]
 		self.i_fk_macroshow.choices = [(-1, '. . .')] + [(m['I_PK_MACRO'], f'{m['I_PK_MACRO']} - {m['A_DESC_MACRO']}') for m in db.fetchall('SELECT I_PK_MACRO, A_DESC_MACRO FROM ER_MACRO ORDER BY 1')]
-		self.i_fk_gruppo.choices = [(-1, '. . .')] + [(g['I_PK_GRUPPI'], g['A_DESC_GRUPPI']) for g in db.fetchall('SELECT I_PK_GRUPPI,A_DESC_GRUPPI FROM ER_GRUPPI ORDER BY 2')]
+		self.i_fk_gruppo.choices = [(-1, '. . .')] + [(g['I_PK_GRUPPI'], f'{g['I_PK_GRUPPI']} - {g['A_DESC_GRUPPI']}') for g in db.fetchall('SELECT I_PK_GRUPPI,A_DESC_GRUPPI FROM ER_GRUPPI ORDER BY 1')]
 		if not editing:
 			self.i_pk_campo.data = db.next_pk('ER_CAMPI', 'I_PK_CAMPO')
