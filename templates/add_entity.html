@@ -1,80 +1,101 @@
 {% extends "base.html" %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
-	{% block sopra %}{% endblock %}
 	<h2 class="mb-4">{{ title }}</h2>
 	<form method="post">
 		{{ form.hidden_tag() }}
-		<table>
-			{% for field in form if field.name != 'submit' %}
-				<tr>
-					<td><label class="form-label">{{ field.label.text }}</label></td>
-					<td>{{ field(class="form-control" if field.type != 'RadioField' else 'form-check-input') }}</td>
-					{% if field.errors %}
-						<div class="invalid-feedback d-block">{{ field.errors[0] }}</div>
-					{% endif %}
-				</tr>
-			{% endfor %}
-			{% if form.tables %}
-				<h5>Tabelle collegate</h5>
-				<div id="table-list">
+		<table class="table mb-5">
+			<tbody>
+				{% for field in form if field.name not in ['tables','submit'] and field.type != 'FieldList' %}
+					<tr>
+						<td><label class="form-label">{{ field.label.text }}</label></td>
+						<td>
+							{{ field(class="form-control") }}
+							{% if field.errors %}
+								<div class="invalid-feedback d-block">{{ field.errors[0] }}</div>
+							{% endif %}
+						</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		{% if form.tables %}
+			<table class="table">
+				<thead>
+					<tr>
+						<th style="width:70%">Tabella</th>
+						<th style="width:10%">Ordine</th>
+						<th style="width:10%">Obbligatorio</th>
+						<th style="width:10%">Azioni</th>
+					</tr>
+				</thead>
+				<tbody id="table-list">
 					{% for sub in form.tables %}
-						<div class="row mb-2 table-entry">
-							<div class="col-8">
-								{{ sub.tabella.label(class="form-label") }}
-								{{ sub.tabella(class="form-select") }}
-							</div>
-							<div class="col-2">
-								{{ sub.ordine() }}
-							</div>
-							<div class="col-2">
-								<button type="button" class="btn btn-danger btn-remove">–</button>
-							</div>
-						</div>
+						<tr class="table-entry">
+							<td>{{ sub.tabella(class="form-select") }}</td>
+							<td>{{ sub.ordine(class="form-control") }}</td>
+							<td>{{ sub.obbligatorio(class="form-select") }}</td>
+							<td>
+								<button type="button" class="btn btn-sm btn-success btn-add-row">+</button>
+								<button type="button" class="btn btn-sm btn-danger btn-remove-row">-</button>
+							</td>
+						</tr>
 					{% endfor %}
-				</div>
-				<button type="button" id="btn-add" class="btn btn-primary mb-3">+ Aggiungi tabella</button>
-				<script>
-					document.addEventListener('DOMContentLoaded', () => {
-						const container = document.getElementById('table-list');
-						const addBtn = document.getElementById('btn-add');
-						let idx = container.children.length;
+				</tbody>
+			</table>
+			<script>
+				document.addEventListener('DOMContentLoaded', () => {
+					const tbody = document.getElementById('table-list');
+					const template = tbody.querySelector('.table-entry');
+					let idx = tbody.children.length;
 
-						addBtn.addEventListener('click', () => {
-							const template = container.querySelector('.table-entry');
-							const clone = template.cloneNode(true);
-
-							// aggiorna name/id
-							clone.querySelectorAll('select, input').forEach(el => {
-								const name = el.name.replace(/tables-\\d+-/, `tables-${idx}-`);
-								const id	 = el.id.replace(/tables-\\d+-/, `tables-${idx}-`);
-								el.name = name; el.id = id;
-								if (el.type === 'hidden') el.value = idx+1;
-								if (el.tagName === 'SELECT') el.selectedIndex = 0;
-							});
-
-							// rimuovi eventuali errori
-							container.appendChild(clone);
-							idx++;
-						});
-
-						container.addEventListener('click', e => {
-							if (e.target.matches('.btn-remove')) {
-								e.target.closest('.table-entry').remove();
+					// Funzione per clonare la riga di template
+					function cloneRow() {
+						const clone = template.cloneNode(true);
+						// aggiorna gli name/id per WTForms
+						clone.querySelectorAll('select, input').forEach(el => {
+							el.name = el.name.replace(/tables-\d+-/, `tables-${idx}-`);
+							el.id = el.id.replace(/tables-\d+-/, `tables-${idx}-`);
+							if (el.id.includes('ordine')) {
+								el.value = idx + 1;
+							}
+							if (el.tagName === 'SELECT') {
+								el.selectedIndex = 0;
 							}
 						});
-					});
-				</script>
-			{% endif %}
-		</table>
+						bindRowButtons(clone);
+						tbody.appendChild(clone);
+						idx++;
+					}
+
+					// Associa eventi + e – a una data riga
+					function bindRowButtons(row) {
+						row.querySelector('.btn-add-row').addEventListener('click', e => {
+							e.preventDefault();
+							cloneRow();
+						});
+						row.querySelector('.btn-remove-row').addEventListener('click', e => {
+							e.preventDefault();
+							if (tbody.children.length > 1) {
+								row.remove();
+							}
+						});
+					}
+
+					// Inizializza i listener su tutte le righe esistenti
+					tbody.querySelectorAll('.table-entry').forEach(bindRowButtons);
+				});
+			</script>
+		{% endif %}
+
 		<button type="submit" class="btn btn-success">{{ form.submit.label.text }}</button>
 		<a href="{{ url_for('index') }}" class="btn btn-secondary">Annulla</a>
 	</form>
-	<style>
-		tr td:nth-child(1) { width: 20% !important; }
-		tr td:nth-child(2) { width: 80% !important; }
-		table { width: 60%; }
-		td { height: 40px; }
-		td * { font-size: 16px; }
+	<style>Add commentMore actions
+		* table:nth-child(1) tr td:nth-child(1) { width: 20% !important; }
+		* table:nth-child(1) tr td:nth-child(2) { width: 80% !important; }
+		table { width: 60% !important; }
+		td { height: 30px !important; align-content: end; }
+		td * { font-size: 16px !important; }
 	</style>
 {% endblock %}

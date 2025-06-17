@@ -37,9 +37,6 @@ class FormProfili(BaseForm):
 		m_all = db.fetchall('SELECT I_PK_MACRO, A_DESC_MACRO FROM ER_MACRO ORDER BY 1')
 		m_link = db.fetchall('SELECT I_FK_MACRO FROM ER_MACRO_PROFILI WHERE I_FK_PROFILO = ?', (self.i_id.data,))
 
-		print(f'\n\nProfilo {self.i_id.data} - Macro: {m_link}')
-		print(f'Args: {args}, Kwargs: {kwargs}\n\n')
-
 		self.macro.choices = [(str(m['I_PK_MACRO']), f'{m['I_PK_MACRO']} - {m['A_DESC_MACRO']}') for m in m_all]
 		if not self.is_submitted():
 			self.macro.data = list(str(m['I_FK_MACRO']) for m in m_link)

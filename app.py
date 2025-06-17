@@ -198,6 +198,13 @@ def macro_post():
 		# eseguo update
 		for q in macro.to_sql(db):
 			aggiungi_sql(q)
+
+		for e in form.tables.entries:
+			tid = e.tabella.data
+			ordn = int(e.ordine.data)
+			obb = str(e.obbligatorio.data)[:1]
+			aggiungi_sql(f"INSERT INTO ER_MACRO_TABELLE (I_FK_MACRO, I_FK_TABELLA, I_ORDINE, A_OBBLIGATORIO) VALUES ({form.i_pk_macro.data}, {tid}, {ordn}, '{obb}')")
+
 		return redirect(url_for('index'))
 	flash('Errore nella validazione del form', 'danger')
 	return render_template('add_entity.html', form=form, title='Aggiungi Macro', js=ENTITY_MAP['macro']['js'], queue_len=QUERY_IN_CODA)
@@ -211,12 +218,27 @@ def macro_edit_get(id: int):
 	form = FormMacro(db, editing=True, tasto='Modifica Macro')
 	form.process(data={k.lower(): v for k, v in data.items()})
 
-	assoc = db.fetchall('SELECT I_FK_TABELLA AS tabella_id, I_ORDINE AS ordine FROM ER_MACRO_TABELLE WHERE I_FK_MACRO = ? ORDER BY I_ORDINE', (id,))
-	for rec in assoc:
-		entry = {}
-		entry['tables-{}-tabella'.format(len(form.tables))] = rec['tabella_id']
-		entry['tables-{}-ordine'.format(len(form.tables))] = rec['ordine']
-		form.tables.append_entry(entry)
+	assoc = db.fetchall("SELECT I_FK_TABELLA AS tabella_id, I_ORDINE AS ordine, A_OBBLIGATORIO AS obbligatorio FROM ER_MACRO_TABELLE WHERE I_FK_MACRO = ? ORDER BY I_ORDINE", (id,))
+
+	form.tables.entries = []
+	tabelle, ordine, obb = [], [], []
+
+	for row in assoc:
+		tabelle.append(row['tabella_id'])
+		ordine.append(row['ordine'])
+		obb.append(row['obbligatorio'])
+
+	if len(tabelle) == 0:
+		tabelle.append(-1)
+		ordine.append(1)
+		obb.append('N')
+
+	for i in range(len(tabelle)):
+		entry = form.tables.append_entry()
+		entry.tabella.choices = [(-1, '. . .')] + [(int(r['ID']), r['TABELLA']) for r in db.fetchall("SELECT I_PK_TABELLA AS ID, A_NOME_TABELLA AS TABELLA FROM ER_TABELLE ORDER BY A_NOME_TABELLA")]
+		entry.tabella.data = tabelle[i]
+		entry.ordine.data  = ordine[i]
+		entry.obbligatorio.data = obb[i]
 
 	return render_template('edit_entity.html', form=form, title='Modifica Macro', entity='macro', js=ENTITY_MAP['macro']['js'], queue_len=QUERY_IN_CODA)
 
@@ -230,9 +252,10 @@ def macro_edit_post(id: int):
 
 		aggiungi_sql(f"DELETE FROM ER_MACRO_TABELLE WHERE I_FK_MACRO = {form.i_pk_macro.data}")
 		for e in form.tables.entries:
-			tid = e.form.tabella.data
-			ordn = int(e.form.ordine.data)
-			aggiungi_sql(f"INSERT INTO ER_MACRO_TABELE (I_FK_MACRO, I_FK_TABELLA, I_ORDINE) VALUES ({form.i_pk_macro.data}, {tid}, {ordn})")
+			tid = e.tabella.data
+			ordn = int(e.ordine.data)
+			obb = str(e.obbligatorio.data)[:1]
+			aggiungi_sql(f"INSERT INTO ER_MACRO_TABELLE (I_FK_MACRO, I_FK_TABELLA, I_ORDINE, A_OBBLIGATORIO) VALUES ({form.i_pk_macro.data}, {tid}, {ordn}, '{obb}')")
 
 		return redirect(url_for('index'))
 	flash('Errore nella validazione del form', 'danger')

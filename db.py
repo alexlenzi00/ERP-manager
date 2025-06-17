@@ -80,13 +80,6 @@ def diff_full(before: Sequence[Dict[str, Any]], after: Sequence[Dict[str, Any]],
 	insert_keys = [k for k in after if _trova(before, _chiave(k, id_cols), id_cols) is None]
 	update_keys = [k for k in after if _trova(before, _chiave(k, id_cols), id_cols) is not None and k != _trova(before, _chiave(k, id_cols), id_cols)]
 
-	print(f'before = {before}')
-	print(f'after = {after}')
-	print(f'delete keys: {delete_keys}')
-	print(f'insert keys: {insert_keys}')
-	print(f'update keys: {update_keys}')
-	print('\n\n')
-
 	for d in delete_keys:
 		sql.append(f'DELETE FROM {table} WHERE {' AND '.join(f'{c} = {sqlStr(d[c])}' for c in id_cols)};')
 
