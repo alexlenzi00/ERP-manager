@@ -45,45 +45,51 @@
 			</table>
 			<script>
 				document.addEventListener('DOMContentLoaded', () => {
-					const tbody = document.getElementById('table-list');
-					const template = tbody.querySelector('.table-entry');
-					let idx = tbody.children.length;
-
-					// Funzione per clonare la riga di template
-					function cloneRow() {
-						const clone = template.cloneNode(true);
-						// aggiorna gli name/id per WTForms
-						clone.querySelectorAll('select, input').forEach(el => {
-							el.name = el.name.replace(/tables-\d+-/, `tables-${idx}-`);
-							el.id = el.id.replace(/tables-\d+-/, `tables-${idx}-`);
-							if (el.id.includes('ordine')) {
-								el.value = idx + 1;
-							}
-							if (el.tagName === 'SELECT') {
-								el.selectedIndex = 0;
-							}
-						});
-						bindRowButtons(clone);
-						tbody.appendChild(clone);
-						idx++;
-					}
-
-					// Associa eventi + e – a una data riga
 					function bindRowButtons(row) {
-						row.querySelector('.btn-add-row').addEventListener('click', e => {
-							e.preventDefault();
-							cloneRow();
-						});
+						row.querySelector('.btn-add-row').addEventListener('click', e => { e.preventDefault(); addRow(); });
+
 						row.querySelector('.btn-remove-row').addEventListener('click', e => {
 							e.preventDefault();
-							if (tbody.children.length > 1) {
-								row.remove();
-							}
+							if ($('#table-list').children().length > 1) row.remove();
 						});
 					}
 
-					// Inizializza i listener su tutte le righe esistenti
-					tbody.querySelectorAll('.table-entry').forEach(bindRowButtons);
+					function addRow() {
+						var list = $('#table-list');
+						var template = list.find('.table-entry').first();
+
+						var nuovo = document.createElement('tr');
+						nuovo.className = 'table-entry';
+						nuovo.innerHTML = template.html();
+						$(nuovo).find('select, input').each(function() {
+							var oldIdx = $(this).data('index') || 0;
+							var newId = this.id.replace(oldIdx, list.children().length);
+							var newNm = this.name.replace(oldIdx, list.children().length);
+
+							if (newId) {
+								this.id = newId;
+							}
+							if (newNm) {
+								this.name = newNm;
+							}
+
+							if (this.id.includes('ordine')) {
+								this.value = list.children().length + 1;
+							}
+							if (this.tagName === 'SELECT') {
+								this.selectedIndex = 0;
+								this.removeAttribute('disabled');
+							}
+						});
+
+						bindRowButtons(nuovo);
+						$(list).append(nuovo);
+						nuovo.dataset.index = list.children.length;
+					}
+
+					$('#table-list .table-entry').each(function() {
+						bindRowButtons(this);
+					});
 				});
 			</script>
 		{% endif %}
