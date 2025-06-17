@@ -17,7 +17,7 @@ class Macro(BaseModel):
 class TableEntryForm(BaseForm):
 	tabella = SelectField('Tabella', choices=[], coerce=int, validators=[DataRequired()])
 	ordine = IntegerField('Ordine', validators=[DataRequired()])
-	obbligatorio = SelectField('Obbligatorio', choices=[('S', 'Si'), ('N', 'No')], coerce=str, default='N', validators=[DataRequired()])
+	obbligatorio = SelectField('Obbligatorio', choices=[('N', 'No'), ('S', 'Si')], coerce=str, default='N', validators=[DataRequired()])
 
 class FormMacro(BaseForm):
 	i_pk_macro = IntegerField('PK Macro', validators=[DataRequired()], render_kw={'readonly': True})

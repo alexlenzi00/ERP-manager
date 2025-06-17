@@ -46,7 +46,10 @@
 			<script>
 				document.addEventListener('DOMContentLoaded', () => {
 					function bindRowButtons(row) {
-						row.querySelector('.btn-add-row').addEventListener('click', e => { e.preventDefault(); addRow(); });
+						row.querySelector('.btn-add-row').addEventListener('click', e => {
+							e.preventDefault();
+							addRow();
+						});
 
 						row.querySelector('.btn-remove-row').addEventListener('click', e => {
 							e.preventDefault();
@@ -61,24 +64,28 @@
 						var nuovo = document.createElement('tr');
 						nuovo.className = 'table-entry';
 						nuovo.innerHTML = template.html();
+
+						$(nuovo).find('.chosen-container').remove();
+
 						$(nuovo).find('select, input').each(function() {
 							var oldIdx = $(this).data('index') || 0;
-							var newId = this.id.replace(oldIdx, list.children().length);
-							var newNm = this.name.replace(oldIdx, list.children().length);
 
-							if (newId) {
-								this.id = newId;
-							}
-							if (newNm) {
-								this.name = newNm;
-							}
+							let idx = list.children().length + 2;
 
-							if (this.id.includes('ordine')) {
-								this.value = list.children().length + 1;
+							var name = $(this).prop('name') || '';
+							var id = $(this).prop('id') || '';
+							$(this).prop('name', name.replace(/tables-\d+-/, `tables-${idx}-`));
+							$(this).prop('id', id.replace(/tables-\d+-/, `tables-${idx}-`));
+
+
+							if ($(this).is('input[type="text"]') || $(this).is('input[type="number"]')) {
+								$(this).val(idx - 1);
 							}
-							if (this.tagName === 'SELECT') {
-								this.selectedIndex = 0;
-								this.removeAttribute('disabled');
+							if ($(this).is('select')) {
+								$(this).prop('selectedIndex', 0);
+								$(this).removeAttr('disabled');
+								$(this).css('display', 'block');
+								$(this).chosen({width: '100%', search_contains: true, auto_complete: true});
 							}
 						});
 
