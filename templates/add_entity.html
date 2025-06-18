@@ -11,6 +11,17 @@
 						<td><label class="form-label">{{ field.label.text }}</label></td>
 						<td>
 							{{ field(class="form-control") }}
+							{% if field.type == 'SelectMultipleField' %}
+								<div class="btn-group ms-1">
+									<button type="button" class="btn btn-outline-secondary btn-xs" title="Svuota" onclick="$('#{{ field.id }}').val([]).trigger('chosen:updated');">Svuota</button>
+									<button type="button" class="btn btn-outline-secondary btn-xs" title="Seleziona tutti" onclick="$('#{{ field.id }} option').prop('selected', true).trigger('chosen:updated');">Tutti</button>
+								</div>
+								<script>
+									$(document).ready(function() {
+										$('#{{ field.id }}').css('width', '80%');
+									});
+								</script>
+							{% endif %}
 							{% if field.errors %}
 								<div class="invalid-feedback d-block">{{ field.errors[0] }}</div>
 							{% endif %}
@@ -22,19 +33,31 @@
 		{% if form.tables %}
 			<table class="table">
 				<thead>
-					<tr>
-						<th style="width:70%">Tabella</th>
-						<th style="width:10%">Ordine</th>
-						<th style="width:10%">Obbligatorio</th>
-						<th style="width:10%">Azioni</th>
-					</tr>
+					{% for sub in form.tables %}
+						<tr>
+							{% if loop.first %}
+								{% for field in sub %}
+									{% if not field.name.endswith('submit') %}
+										{% if field.name.endswith('tabella') %}
+											<th style="width: 50%;">{{ field.name.split('-')[-1].upper() }}</th>
+										{% else %}
+											<th>{{ field.name.split('-')[-1].upper() }}</th>
+										{% endif %}
+									{% endif %}
+								{% endfor %}
+								<th>AZIONI</th>
+							{% endif %}
+						</tr>
+					{% endfor %}
 				</thead>
 				<tbody id="table-list">
 					{% for sub in form.tables %}
 						<tr class="table-entry">
-							<td>{{ sub.tabella(class="form-select") }}</td>
-							<td>{{ sub.ordine(class="form-control") }}</td>
-							<td>{{ sub.obbligatorio(class="form-select") }}</td>
+							{% for field in sub %}
+								{% if not field.name.endswith('submit') %}
+									<td>{{ field(class="form-control") }}</td>
+								{% endif %}
+							{% endfor %}
 							<td>
 								<button type="button" class="btn btn-sm btn-success btn-add-row">+</button>
 								<button type="button" class="btn btn-sm btn-danger btn-remove-row">-</button>
@@ -78,7 +101,7 @@
 							$(this).prop('id', id.replace(/tables-\d+-/, `tables-${idx}-`));
 
 
-							if ($(this).is('input[type="text"]') || $(this).is('input[type="number"]')) {
+							if ($(this).is('input[type="number"]')) {
 								$(this).val(idx - 1);
 							}
 							if ($(this).is('select')) {

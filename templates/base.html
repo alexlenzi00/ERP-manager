@@ -64,8 +64,16 @@
 			{% endwith %}
 			{% block content %}{% endblock %}
 		</div>
+		<div style="min-height: 200px;"></div>
 		<script>
-			$('select').chosen({width:'100%', search_contains:true, auto_complete:true});
+			$('select').each(function() {
+				if ($(this).prop('multiple')) {
+					$(this).chosen({width:"80%", search_contains:true, auto_complete:true});
+				}
+				else {
+					$(this).chosen({width:"100%", search_contains:true, auto_complete:true});
+				}
+			});
 			$(document).ready(function() {
 				$('table').attr('cellpadding', '5px !important');
 			});

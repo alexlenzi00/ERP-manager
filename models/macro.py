@@ -3,7 +3,6 @@ from wtforms.validators import DataRequired
 from .forms import BaseForm
 from .models import BaseModel
 from dataclasses import dataclass
-from flask import flash
 
 @dataclass
 class Macro(BaseModel):

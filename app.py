@@ -31,7 +31,7 @@ ENTITY_MAP = {
 				LEFT JOIN ER_GRUPPI EG ON EG.I_PK_GRUPPI = EC.I_FK_GRUPPO
 				LEFT JOIN ER_TABELLE ET ON ET.I_PK_TABELLA = EC.I_FK_TABELLA
 				ORDER BY EM.I_ORDINE, EG.I_ORDINE_GRUPPI, EC.I_ORDINE''',
-		'js': '''<script> $(function(){ visualizza('#a_strquery', $('#a_tipo_campo').val() === 'combofil'); $('#a_tipo_campo').on('change', function(){ visualizza('#a_strquery', this.value === 'combofil'); }); }); </script>'''
+		'js': ''
 	},
 	'tabella': {
 		'form': FormTabelle,
@@ -157,6 +157,13 @@ def tabella_post():
 		# eseguo update
 		for q in tabella.to_sql(db):
 			aggiungi_sql(q)
+
+		for e in form.tables.entries:
+			tid = e.tabella.data
+			vincolo = str(e.vincolo.data)
+			tipo_join = str(e.tipo_join.data)[:1].upper()
+			aggiungi_sql(f"INSERT INTO ER_RELAZIONI (I_FK_TABELLA1, I_FK_TABELLA2, A_TIPO_JOIN, A_VINCOLO) VALUES ({form.i_pk_tabella.data}, {tid}, '{tipo_join.replace("'", "''")}', '{vincolo.replace("'", "''")}')")
+
 		return redirect(url_for('index'))
 	else:
 		flash('Errore nella validazione del form', 'danger')
@@ -171,6 +178,28 @@ def tabella_edit_get(id: int):
 	form = FormTabelle(db, editing=True, tasto='Modifica Tabella')
 	form.process(data={k.lower(): v for k, v in data.items()})
 
+	assoc = db.fetchall("SELECT I_FK_TABELLA2 AS tabella_id, A_TIPO_JOIN AS tipo_join, A_VINCOLO AS vincolo FROM ER_RELAZIONI WHERE I_FK_TABELLA1 = ? ORDER BY 1", (id,))
+
+	form.tables.entries = []
+	tabelle, join, vincoli = [], [], []
+
+	for row in assoc:
+		tabelle.append(row['tabella_id'])
+		join.append(row['tipo_join'])
+		vincoli.append(row['vincolo'])
+
+	if len(tabelle) == 0:
+		tabelle.append(-1)
+		join.append('I')
+		vincoli.append('')
+
+	for i in range(len(tabelle)):
+		entry = form.tables.append_entry()
+		entry.tabella.choices = [(-1, '. . .')] + [(int(r['ID']), r['TABELLA']) for r in db.fetchall("SELECT I_PK_TABELLA AS ID, A_NOME_TABELLA AS TABELLA FROM ER_TABELLE ORDER BY A_NOME_TABELLA")]
+		entry.tabella.data = tabelle[i]
+		entry.tipo_join.data  = join[i]
+		entry.vincolo.data = vincoli[i]
+
 	return render_template('edit_entity.html', form=form, title='Modifica Tabella', entity='tabella', js=ENTITY_MAP['tabella']['js'], queue_len=QUERY_IN_CODA)
 
 @app.route('/tabella/edit/<int:id>', methods=['POST'])
@@ -180,6 +209,14 @@ def tabella_edit_post(id: int):
 		# eseguo update
 		for q in Tabella.daForm(form).to_sql(db):
 			aggiungi_sql(q)
+
+		aggiungi_sql(f"DELETE FROM ER_RELAZIONI WHERE I_FK_TABELLA1 = {form.i_pk_tabella.data}")
+		for e in form.tables.entries:
+			tid = e.tabella.data
+			vincolo = str(e.vincolo.data)
+			tipo_join = str(e.tipo_join.data)[:1].upper()
+			aggiungi_sql(f"INSERT INTO ER_RELAZIONI (I_FK_TABELLA1, I_FK_TABELLA2, A_TIPO_JOIN, A_VINCOLO) VALUES ({form.i_pk_tabella.data}, {tid}, '{tipo_join.replace("'", "''")}', '{vincolo.replace("'", "''")}')")
+
 		return redirect(url_for('index'))
 	flash('Errore nella validazione del form', 'danger')
 	return render_template('edit_entity.html', form=form, title='Modifica Tabella', entity='tabella', js=ENTITY_MAP['tabella']['js'], queue_len=QUERY_IN_CODA)
@@ -203,7 +240,7 @@ def macro_post():
 			tid = e.tabella.data
 			ordn = int(e.ordine.data)
 			obb = str(e.obbligatorio.data)[:1]
-			aggiungi_sql(f"INSERT INTO ER_MACRO_TABELLE (I_FK_MACRO, I_FK_TABELLA, I_ORDINE, A_OBBLIGATORIO) VALUES ({form.i_pk_macro.data}, {tid}, {ordn}, '{obb}')")
+			aggiungi_sql(f"INSERT INTO ER_MACRO_TABELLE (I_FK_MACRO, I_FK_TABELLA, I_ORDINE, A_OBBLIGATORIO) VALUES ({form.i_pk_macro.data}, {tid}, {ordn}, '{obb.replace("'", "''")}')")
 
 		return redirect(url_for('index'))
 	flash('Errore nella validazione del form', 'danger')
@@ -255,7 +292,7 @@ def macro_edit_post(id: int):
 			tid = e.tabella.data
 			ordn = int(e.ordine.data)
 			obb = str(e.obbligatorio.data)[:1]
-			aggiungi_sql(f"INSERT INTO ER_MACRO_TABELLE (I_FK_MACRO, I_FK_TABELLA, I_ORDINE, A_OBBLIGATORIO) VALUES ({form.i_pk_macro.data}, {tid}, {ordn}, '{obb}')")
+			aggiungi_sql(f"INSERT INTO ER_MACRO_TABELLE (I_FK_MACRO, I_FK_TABELLA, I_ORDINE, A_OBBLIGATORIO) VALUES ({form.i_pk_macro.data}, {tid}, {ordn}, '{obb.replace("'", "''")}')")
 
 		return redirect(url_for('index'))
 	flash('Errore nella validazione del form', 'danger')
